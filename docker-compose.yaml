@@ -1,0 +1,15 @@
+services:
+
+  db_vg:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "6432:5432"
+    volumes:
+      - postgres_vg_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_vg_data:
