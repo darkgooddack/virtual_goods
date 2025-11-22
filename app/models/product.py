@@ -49,7 +49,7 @@ class Product(Base):
     )
 
     transactions = relationship(
-        "Transaction",
+        "PaymentTransaction",
         back_populates="product",
         lazy="selectin"
     )

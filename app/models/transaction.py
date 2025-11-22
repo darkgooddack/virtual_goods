@@ -17,8 +17,8 @@ class TransactionStatus(enum.Enum):
     FAILED = "failed"
 
 
-class Transaction(Base):
-    __tablename__ = "transactions"
+class PaymentTransaction(Base):
+    __tablename__ = "payment_transactions"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,
@@ -51,12 +51,12 @@ class Transaction(Base):
     user = relationship(
         "User",
         back_populates="transactions",
-        lazy="joined"
+        lazy="selectin"
     )
     product = relationship(
         "Product",
         back_populates="transactions",
-        lazy="joined"
+        lazy="selectin"
     )
 
 
@@ -74,6 +74,7 @@ class PaymentRequest(Base):
         index=True
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"),
         nullable=False
     )
     amount: Mapped[int] = mapped_column(
@@ -83,3 +84,5 @@ class PaymentRequest(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         server_default=func.now()
     )
+
+    user = relationship("User", back_populates="payment_requests", lazy="selectin")

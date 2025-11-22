@@ -25,6 +25,10 @@ class User(Base):
         nullable=False,
         unique=True
     )
+    hash_password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
     balance: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -40,7 +44,12 @@ class User(Base):
     )
 
     transactions = relationship(
-        "Transaction",
+        "PaymentTransaction",
+        back_populates="user",
+        lazy="selectin"
+    )
+    payment_requests = relationship(
+        "PaymentRequest",
         back_populates="user",
         lazy="selectin"
     )

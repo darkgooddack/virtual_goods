@@ -43,10 +43,10 @@ class Inventory(Base):
     user = relationship(
         "User",
         back_populates="inventory",
-        lazy="joined"
+        lazy="selectin"
     )
     product = relationship(
         "Product",
         back_populates="inventory",
-        lazy="joined"
+        lazy="selectin"
     )
