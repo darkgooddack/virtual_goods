@@ -1,6 +1,9 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database.db import get_session
 from app.schema.user import UserLoginOut, UserOut
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -63,15 +66,17 @@ def decode_access_token(token: str) -> dict:
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    repo: UserRepository = Depends()
+    session: AsyncSession = Depends(get_session),
 ) -> UserOut:
     payload = decode_access_token(token)
     user_id = payload.get("sub")
     if not user_id:
         raise InvalidCredentialsError()
 
+    repo = UserRepository(session)
     user = await repo.get_by_id(user_id)
     if not user:
         raise InvalidCredentialsError()
-    current_user = UserOut.model_validate(user)
-    return current_user
+
+    return UserOut.model_validate(user)
+

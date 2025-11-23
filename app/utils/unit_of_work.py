@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 class UnitOfWork:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -13,4 +12,3 @@ class UnitOfWork:
             await self.session.rollback()
         else:
             await self.session.commit()
-        await self.session.close()
