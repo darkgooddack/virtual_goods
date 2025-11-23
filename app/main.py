@@ -16,7 +16,7 @@ async def shortener_base_error_handler(
         request: Request,
         exc: AppBaseError
 ):
-    raise exc.to_http_exception()
+    raise exc.http()
 
 for router in routers:
     app.include_router(router, prefix=settings.api.prefix)

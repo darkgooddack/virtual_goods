@@ -1,22 +1,29 @@
-from fastapi import HTTPException
-from app.models.user import User
-from app.repository.user import UserRepository
-from app.core.security import hash_password, verify_password, create_access_token
+from app.models import User
+from app.schema.user import UserRegisterIn, UserLoginIn, UserLoginOut, UserRegisterOut
+from app.core.security import hash_password, verify_password, create_token_pair
+from app.utils.error import UserAlreadyExistsError, InvalidCredentialsError
+
 
 class UserService:
-    def __init__(self, user_repo: UserRepository):
-        self.user_repo = user_repo
+    def __init__(self, repo):
+        self.repo = repo
 
-    async def register(self, username: str, email: str, password: str) -> User:
-        existing = await self.user_repo.get_by_email(email)
+    async def register(self, data: UserRegisterIn) -> UserRegisterOut:
+        existing = await self.repo.get_by_email(data.email)
         if existing:
-            raise HTTPException(status_code=400, detail="Email already registered")
+            raise UserAlreadyExistsError()
 
-        user = User(username=username, email=email, hash_password=hash_password(password))
-        return await self.user_repo.create(user)
+        user = await self.repo.create_user(
+            username=data.username,
+            email=data.email,
+            password_hash=hash_password(data.password)
+        )
 
-    async def login(self, email: str, password: str) -> str:
-        user = await self.user_repo.get_by_email(email)
-        if not user or not verify_password(password, str(user.hash_password)):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        return create_access_token({"sub": str(user.id)})
+        return UserRegisterOut(id=user.id, email=user.email)
+
+    async def login(self, data: UserLoginIn) -> UserLoginOut:
+        user = await self.repo.get_by_email(data.email)
+        if not user or not verify_password(data.password, str(user.hash_password)):
+            raise InvalidCredentialsError()
+
+        return create_token_pair(str(user.id))

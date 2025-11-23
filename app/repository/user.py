@@ -1,16 +1,25 @@
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 from app.models.user import User
+
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_email(self, email: str) -> User | None:
-        result = await self.session.execute(select(User).where(User.email == email))
+    async def get_by_email(self, email: EmailStr) -> User | None:
+        result = await self.session.execute(
+            select(User).where(User.email == email)
+        )
         return result.scalar_one_or_none()
 
-    async def create(self, user: User) -> User:
+    async def create_user(self, username: str, email: EmailStr, password_hash: str) -> User:
+        user = User(
+            username=username,
+            email=email,
+            hash_password=password_hash
+        )
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)

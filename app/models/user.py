@@ -1,6 +1,7 @@
 import datetime
 import uuid
 
+from pydantic import EmailStr
 from sqlalchemy import String, Integer, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -20,7 +21,7 @@ class User(Base):
         nullable=False,
         unique=True
     )
-    email: Mapped[str] = mapped_column(
+    email: Mapped[EmailStr] = mapped_column(
         String(50),
         nullable=False,
         unique=True
