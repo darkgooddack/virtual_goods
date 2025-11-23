@@ -1,8 +1,6 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
-from pydantic import BaseModel
-
 from app.schema.user import UserLoginOut, UserOut
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer

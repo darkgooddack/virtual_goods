@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from app.core.dependencies import get_product_service
 from app.core.security import get_current_user
-from app.schema.product import ProductForBuy
+from app.schema.product import ProductForBuy, ProductPurchaseResponse
 from app.schema.user import UserOut
 from app.service.product import ProductService
 
@@ -13,7 +13,8 @@ router = APIRouter(prefix="/products", tags=["Products"])
 
 
 @router.post(
-    "/{product_id}/purchase"
+    "/{product_id}/purchase",
+    response_model=None
 )
 async def purchase_product(
     product_id: uuid.UUID,

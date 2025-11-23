@@ -54,7 +54,7 @@ class ProductService:
             )
 
         inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
-        if product.type == "permanent" and inventory_item is not None:
+        if product.product_type == "permanent" and inventory_item is not None:
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,

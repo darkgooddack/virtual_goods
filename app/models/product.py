@@ -8,7 +8,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.db import Base
 
 
-
 class Product(Base):
     __tablename__ = "products"
 
@@ -28,7 +27,7 @@ class Product(Base):
         Integer,
         nullable=False
     )
-    type: Mapped[str] = mapped_column(
+    product_type: Mapped[str] = mapped_column(
         String(20),
         nullable=False
     )
