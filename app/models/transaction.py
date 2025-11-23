@@ -1,20 +1,13 @@
 import datetime
 import uuid
-import enum
 
 from sqlalchemy import (
-    Integer, ForeignKey, Enum, String
+    Integer, ForeignKey, String
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
-
-
-class TransactionStatus(enum.Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
 
 
 class PaymentTransaction(Base):
@@ -38,8 +31,8 @@ class PaymentTransaction(Base):
         Integer,
         nullable=False
     )
-    status: Mapped[TransactionStatus] = mapped_column(
-        Enum(TransactionStatus, name="transaction_status_enum"),
+    status: Mapped[str] = mapped_column(
+        String(20),
         nullable=False,
         index=True
     )

@@ -1,17 +1,12 @@
 import datetime
 import uuid
-import enum
 
-from sqlalchemy import String, Boolean, Integer, Enum
+from sqlalchemy import String, Boolean, Integer
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
 
-
-class ProductType(enum.Enum):
-    CONSUMABLE = "consumable"
-    PERMANENT = "permanent"
 
 
 class Product(Base):
@@ -33,8 +28,8 @@ class Product(Base):
         Integer,
         nullable=False
     )
-    type: Mapped[ProductType] = mapped_column(
-        Enum(ProductType, name="product_type_enum"),
+    type: Mapped[str] = mapped_column(
+        String(20),
         nullable=False
     )
     is_active: Mapped[bool] = mapped_column(
