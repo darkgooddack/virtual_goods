@@ -13,7 +13,7 @@ class ProductService:
         self.payment_request_repo = payment_request_repo
         self.user_repo = user_repo
 
-    async def purchase_product(
+    async def process_purchase(
         self,
         user_id: uuid.UUID,
         product_id: uuid.UUID,

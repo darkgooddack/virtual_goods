@@ -14,7 +14,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 
 @router.post(
     "/{product_id}/purchase",
-    response_model=None
+    response_model=ProductPurchaseResponse
 )
 async def purchase_product(
     product_id: uuid.UUID,
@@ -22,7 +22,7 @@ async def purchase_product(
     current_user: UserOut = Depends(get_current_user),
     service: ProductService = Depends(get_product_service),
 ):
-    res = await service.purchase_product(
+    res = await service.process_purchase(
         user_id=current_user.id,
         product_id=product_id,
         payload=payload
