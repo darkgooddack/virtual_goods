@@ -20,3 +20,8 @@ class UserAlreadyExistsError(AppBaseError):
 class InvalidCredentialsError(AppBaseError):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Неверный логин или пароль"
+
+
+class TransactionFailedError(AppBaseError):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Не удалось завершить транзакцию покупки"

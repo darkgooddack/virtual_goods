@@ -25,6 +25,16 @@ class UsernameMixin(BaseModel):
     username: str = Field(..., min_length=7)
 
 
+class UserOut(BaseModel):
+    id: uuid.UUID
+    email: EmailStr
+    username: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
 class UserRegisterIn(UsernameMixin, EmailMixin, PasswordMixin):
     pass
 

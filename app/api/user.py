@@ -9,7 +9,7 @@ from app.service.user import UserService
 from app.core.dependencies import get_user_service
 
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["Пользователи"])
 
 
 @router.post("/register", response_model=UserRegisterOut)

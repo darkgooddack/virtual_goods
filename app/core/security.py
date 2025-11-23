@@ -1,10 +1,21 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+
+from pydantic import BaseModel
+
+from app.schema.user import UserLoginOut, UserOut
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
+from app.repository.user import UserRepository
 from app.core.config import settings
-from app.schema.user import UserLoginOut
+from jose import jwt, JWTError
+
+from app.utils.error import InvalidCredentialsError
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
+
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -41,3 +52,28 @@ def create_token_pair(user_id: str) -> UserLoginOut:
         refresh_token=create_refresh_token(user_id),
         token_type="bearer"
     )
+
+def decode_access_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, settings.jwt.secret_key, algorithms=[settings.jwt.algorithm])
+        if payload.get("typ") != "access":
+            raise InvalidCredentialsError()
+        return payload
+    except JWTError:
+        raise InvalidCredentialsError()
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    repo: UserRepository = Depends()
+) -> UserOut:
+    payload = decode_access_token(token)
+    user_id = payload.get("sub")
+    if not user_id:
+        raise InvalidCredentialsError()
+
+    user = await repo.get_by_id(user_id)
+    if not user:
+        raise InvalidCredentialsError()
+    current_user = UserOut.model_validate(user)
+    return current_user

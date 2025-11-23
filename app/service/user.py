@@ -1,4 +1,3 @@
-from app.models import User
 from app.schema.user import UserRegisterIn, UserLoginIn, UserLoginOut, UserRegisterOut
 from app.core.security import hash_password, verify_password, create_token_pair
 from app.utils.error import UserAlreadyExistsError, InvalidCredentialsError
