@@ -9,7 +9,7 @@ from app.schema.user import UserOut
 from app.service.product import ProductService
 
 
-router = APIRouter(prefix="/products", tags=["Products"])
+router = APIRouter(prefix="/products", tags=["Продукты"])
 
 
 @router.post(

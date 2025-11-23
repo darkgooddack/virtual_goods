@@ -20,22 +20,15 @@ class ProductService:
         payload: ProductForBuy
     ) -> ProductPurchaseResponse:
 
-        idempotency_key = generate_idempotency_key(str(user_id), str(product_id))
-
-        existing_request = await self.payment_request_repo.get_by_key(idempotency_key)
-        if existing_request:
-            return ProductPurchaseResponse(
-                success=True,
-                amount_spent=existing_request.amount,
-                product_received=ProductInfo(
-                    product_id=str(product_id),
-                    quantity=payload.quantity
-                ),
-                message="Покупка уже обработана"
-            )
-
         product = await self.product_repo.get_product(product_id)
         if not product or not product.is_active:
+            async with UnitOfWork(self.product_repo.session):
+                await self.transaction_repo.create_transaction(
+                    user_id=user_id,
+                    product_id=product_id,
+                    amount=0,
+                    status="failed"
+                )
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,
@@ -43,9 +36,36 @@ class ProductService:
                 message="Товар не найден или не активен"
             )
 
-        user_balance = await self.user_repo.get_balance(user_id)
         total_cost = product.price * payload.quantity
+
+        idempotency_key = None
+        if product.product_type == "permanent":
+            idempotency_key = generate_idempotency_key(str(user_id), str(product_id))
+            existing = await self.payment_request_repo.get_by_key(idempotency_key)
+            if existing:
+                async with UnitOfWork(self.product_repo.session):
+                    await self.transaction_repo.create_transaction(
+                        user_id=user_id,
+                        product_id=product_id,
+                        amount=total_cost,
+                        status="failed"
+                    )
+                return ProductPurchaseResponse(
+                    success=False,
+                    amount_spent=existing.amount,
+                    product_received=None,
+                    message="Покупка уже обработана"
+                )
+
+        user_balance = await self.user_repo.get_balance(user_id)
         if user_balance < total_cost:
+            async with UnitOfWork(self.product_repo.session):
+                await self.transaction_repo.create_transaction(
+                    user_id=user_id,
+                    product_id=product_id,
+                    amount=total_cost,
+                    status="failed"
+                )
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,
@@ -54,7 +74,14 @@ class ProductService:
             )
 
         inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
-        if product.product_type == "permanent" and inventory_item is not None:
+        if product.product_type == "permanent" and inventory_item:
+            async with UnitOfWork(self.product_repo.session):
+                await self.transaction_repo.create_transaction(
+                    user_id=user_id,
+                    product_id=product_id,
+                    amount=total_cost,
+                    status="failed"
+                )
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,
@@ -63,35 +90,35 @@ class ProductService:
             )
 
         async with UnitOfWork(self.product_repo.session):
-            # создаём транзакцию pending
-            tx = await self.transaction_repo.create_transaction(
-                user_id=user_id,
-                product_id=product_id,
-                amount=total_cost,
-                status="pending"
-            )
-
             try:
-                # списываем деньги
-                await self.product_repo.decrease_user_balance(user_id, total_cost)
+                tx = await self.transaction_repo.create_transaction(
+                    user_id=user_id,
+                    product_id=product_id,
+                    amount=total_cost,
+                    status="pending"
+                )
 
-                # обновляем инвентарь
+                await self.user_repo.decrease_user_balance(user_id, total_cost)
+
                 if inventory_item:
-                    await self.inventory_repo.update_inventory_quantity(inventory_item, payload.quantity)
+                    await self.inventory_repo.update_inventory_quantity(
+                        inventory_item, payload.quantity
+                    )
                 else:
-                    await self.inventory_repo.add_inventory_item(user_id, product_id, payload.quantity)
+                    await self.inventory_repo.add_inventory_item(
+                        user_id, product_id, payload.quantity
+                    )
 
-                # успешное завершение
                 tx.status = "completed"
-                self.product_repo.session.add(tx)
 
-                # создаём PaymentRequest
-                await self.payment_request_repo.create_request(user_id, total_cost, idempotency_key)
+                if idempotency_key:
+                    await self.payment_request_repo.create_request(
+                        user_id, total_cost, idempotency_key
+                    )
 
-            except Exception as e:
+            except Exception:
                 tx.status = "failed"
-                self.product_repo.session.add(tx)
-                raise TransactionFailedError() from e
+                raise TransactionFailedError()
 
         return ProductPurchaseResponse(
             success=True,
