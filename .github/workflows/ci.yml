@@ -19,11 +19,6 @@ jobs:
           DB__PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -49,11 +44,11 @@ jobs:
 
       - name: Run tests
         env:
-          DB__HOST: postgres
-          DB__PORT: 5432
-          DB__NAME: postgres
-          DB__USER: postgres
-          DB__PASSWORD: postgres
+          DB__HOST: ${{ secrets.POSTGRES_HOST }}
+          DB__PORT: ${{ secrets.POSTGRES_PORT }}
+          DB__NAME: ${{ secrets.POSTGRES_DB }}
+          DB__USER: ${{ secrets.POSTGRES_USER }}
+          DB__PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
           source .venv/bin/activate
           pytest -v
