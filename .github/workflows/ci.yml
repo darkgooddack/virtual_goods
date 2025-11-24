@@ -14,11 +14,16 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          DB__NAME: ${{ secrets.POSTGRES_DB }}
-          DB__USER: ${{ secrets.POSTGRES_USER }}
-          DB__PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ${{ secrets.POSTGRES_USER }}"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout code
@@ -36,16 +41,17 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Wait for Postgres
+      - name: Wait for Postgres (CI)
         run: |
-          until pg_isready -h postgres -p 5432 -U postgres; do
+          until pg_isready -h postgres -p 5432 -U ${{ secrets.POSTGRES_USER }}; do
+            echo "Postgres not ready yet..."
             sleep 1
           done
 
       - name: Run tests
         env:
-          DB__HOST: ${{ secrets.POSTGRES_HOST }}
-          DB__PORT: ${{ secrets.POSTGRES_PORT }}
+          DB__HOST: postgres
+          DB__PORT: 5432
           DB__NAME: ${{ secrets.POSTGRES_DB }}
           DB__USER: ${{ secrets.POSTGRES_USER }}
           DB__PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
