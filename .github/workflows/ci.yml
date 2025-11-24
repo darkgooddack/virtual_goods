@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.POSTGRES_USER }}"
+          --health-cmd="pg_isready -U test_user"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=5
@@ -41,10 +41,10 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Wait for Postgres (CI)
+      - name: Wait for Postgres
         run: |
-          until pg_isready -h postgres -p 5432 -U ${{ secrets.POSTGRES_USER }}; do
-            echo "Postgres not ready yet..."
+          until pg_isready -h postgres -p 5432 -U test_user; do
+            echo "Waiting for postgres..."
             sleep 1
           done
 
@@ -52,9 +52,9 @@ jobs:
         env:
           DB__HOST: postgres
           DB__PORT: 5432
-          DB__NAME: ${{ secrets.POSTGRES_DB }}
-          DB__USER: ${{ secrets.POSTGRES_USER }}
-          DB__PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DB__NAME: test_db
+          DB__USER: test_user
+          DB__PASSWORD: test_password
         run: |
           source .venv/bin/activate
           pytest -v
