@@ -42,3 +42,9 @@ class UserRepository:
     async def get_balance(self, user_id: uuid.UUID) -> int:
         user = await self.session.get(User, user_id)
         return user.balance
+
+
+    async def get_all_user_ids(self) -> list[uuid.UUID]:
+        query = select(User.id)
+        result = await self.session.execute(query)
+        return [row[0] for row in result.fetchall()]

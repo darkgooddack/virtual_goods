@@ -6,7 +6,14 @@ from app.utils.unit_of_work import UnitOfWork
 
 
 class ProductService:
-    def __init__(self, product_repo, inventory_repo, transaction_repo, payment_request_repo, user_repo):
+    def __init__(
+            self,
+            product_repo,
+            inventory_repo,
+            transaction_repo,
+            payment_request_repo,
+            user_repo
+    ):
         self.product_repo = product_repo
         self.inventory_repo = inventory_repo
         self.transaction_repo = transaction_repo

@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import Inventory
 
@@ -27,3 +28,14 @@ class InventoryRepository:
     async def update_inventory_quantity(self, item: Inventory, quantity: int):
         item.quantity += quantity
         self.session.add(item)
+
+    async def get_by_user_id(self, user_id: uuid.UUID):
+        query = (
+            select(Inventory)
+            .where(Inventory.user_id == user_id)
+            .options(
+                selectinload(Inventory.product)
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalars().all()
