@@ -1,5 +1,22 @@
 services:
 
+  app_vg:
+    build: .
+    container_name: app_vg
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db_vg
+      - redis_vg
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health/liveness && curl -f http://localhost:8000/api/v1/health/readiness || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   db_vg:
     image: postgres:17
     environment:
@@ -10,6 +27,57 @@ services:
       - "6432:5432"
     volumes:
       - postgres_vg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis_vg:
+    image: redis:7-alpine
+    container_name: redis_vg
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: [
+      "redis-server",
+      "--save", "60", "1",
+      "--maxmemory", "256mb",
+      "--maxmemory-policy", "allkeys-lru",
+      "--loglevel", "warning"
+    ]
+    volumes:
+      - redis_vg_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker_vg:
+    build: .
+    container_name: worker_vg
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: celery -A app.utils.celery_app.celery_app worker --loglevel=info
+    depends_on:
+      - app_vg
+      - db_vg
+      - redis_vg
+
+  beat_vg:
+    build: .
+    container_name: beat_vg
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: celery -A app.utils.celery_app.celery_app beat --loglevel=info
+    depends_on:
+      - app_vg
+      - db_vg
+      - redis_vg
 
 volumes:
   postgres_vg_data:
+  redis_vg_data:

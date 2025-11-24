@@ -1,3 +1,5 @@
+import uuid
+
 from app.schema.user import UserRegisterIn, UserLoginIn, UserLoginOut, UserRegisterOut
 from app.core.security import hash_password, verify_password, create_token_pair
 from app.utils.error import UserAlreadyExistsError, InvalidCredentialsError
@@ -26,3 +28,6 @@ class UserService:
             raise InvalidCredentialsError()
 
         return create_token_pair(str(user.id))
+
+    async def get_all_user_ids(self) -> list[uuid.UUID]:
+        return await self.repo.get_all_user_ids()

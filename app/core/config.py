@@ -3,6 +3,12 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class RedisConfig(BaseSettings):
+    url: str
+    broker_url: str
+    backend_url: str
+
+
 class JwtConfig(BaseSettings):
     secret_key: str
     algorithm: str
@@ -17,6 +23,10 @@ class DatabaseConfig(BaseSettings):
     user: str
     password: str
 
+    @property
+    def url(self) -> str:
+        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
 
 class ApiConfig(BaseSettings):
     prefix: str = "/api/v1"
@@ -26,6 +36,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig
     jwt: JwtConfig
     api: ApiConfig = ApiConfig()
+    redis: RedisConfig
 
 
     model_config = SettingsConfigDict(
