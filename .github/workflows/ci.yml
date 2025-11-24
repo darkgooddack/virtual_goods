@@ -14,9 +14,9 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          DB__NAME: ${{ secrets.POSTGRES_DB }}
+          DB__USER: ${{ secrets.POSTGRES_USER }}
+          DB__PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
