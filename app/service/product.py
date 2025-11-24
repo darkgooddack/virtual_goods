@@ -1,7 +1,7 @@
 import uuid
 from app.schema.product import ProductForBuy, ProductPurchaseResponse, ProductInfo
 from app.utils.error import TransactionFailedError
-from app.utils.idempotency import generate_idempotency_key
+from app.utils.redis import redis_cache
 from app.utils.unit_of_work import UnitOfWork
 
 
@@ -21,21 +21,16 @@ class ProductService:
         self.user_repo = user_repo
 
     async def process_purchase(
-        self,
-        user_id: uuid.UUID,
-        product_id: uuid.UUID,
-        payload: ProductForBuy
+            self,
+            user_id: uuid.UUID,
+            product_id: uuid.UUID,
+            payload: ProductForBuy,
+            idempotency_key: str
     ) -> ProductPurchaseResponse:
 
+        # Проверяем наличие товара
         product = await self.product_repo.get_product(product_id)
         if not product or not product.is_active:
-            async with UnitOfWork(self.product_repo.session):
-                await self.transaction_repo.create_transaction(
-                    user_id=user_id,
-                    product_id=product_id,
-                    amount=0,
-                    status="failed"
-                )
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,
@@ -43,36 +38,34 @@ class ProductService:
                 message="Товар не найден или не активен"
             )
 
+        # Проверяем кеш
+        cached = await redis_cache.get(idempotency_key)
+        if cached:
+            return ProductPurchaseResponse(
+                success=True,
+                amount_spent=cached['amount'],
+                product_received=ProductInfo(
+                    product_id=str(product_id),
+                    quantity=cached['quantity']
+                ),
+                message="Операция уже обработана"
+            )
+
+        # Проверяем БД
+        existing_request = await self.payment_request_repo.get_by_key(idempotency_key)
+        if existing_request:
+            return ProductPurchaseResponse(
+                success=True,
+                amount_spent=existing_request.amount,
+                product_received=None,
+                message="Операция уже обработана"
+            )
+
         total_cost = product.price * payload.quantity
 
-        idempotency_key = None
-        if product.product_type == "permanent":
-            idempotency_key = generate_idempotency_key(str(user_id), str(product_id))
-            existing = await self.payment_request_repo.get_by_key(idempotency_key)
-            if existing:
-                async with UnitOfWork(self.product_repo.session):
-                    await self.transaction_repo.create_transaction(
-                        user_id=user_id,
-                        product_id=product_id,
-                        amount=total_cost,
-                        status="failed"
-                    )
-                return ProductPurchaseResponse(
-                    success=False,
-                    amount_spent=existing.amount,
-                    product_received=None,
-                    message="Покупка уже обработана"
-                )
-
+        # Проверяем баланс
         user_balance = await self.user_repo.get_balance(user_id)
         if user_balance < total_cost:
-            async with UnitOfWork(self.product_repo.session):
-                await self.transaction_repo.create_transaction(
-                    user_id=user_id,
-                    product_id=product_id,
-                    amount=total_cost,
-                    status="failed"
-                )
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,
@@ -80,15 +73,9 @@ class ProductService:
                 message="Недостаточно средств"
             )
 
+        # Перманентный товар — можно купить только если его нет в инвентаре
         inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
         if product.product_type == "permanent" and inventory_item:
-            async with UnitOfWork(self.product_repo.session):
-                await self.transaction_repo.create_transaction(
-                    user_id=user_id,
-                    product_id=product_id,
-                    amount=total_cost,
-                    status="failed"
-                )
             return ProductPurchaseResponse(
                 success=False,
                 amount_spent=0,
@@ -96,6 +83,7 @@ class ProductService:
                 message="Товар уже куплен"
             )
 
+        # Транзакция покупки
         async with UnitOfWork(self.product_repo.session):
             try:
                 tx = await self.transaction_repo.create_transaction(
@@ -118,9 +106,18 @@ class ProductService:
 
                 tx.status = "completed"
 
+                # Сохраняем idempotency_key
                 if idempotency_key:
                     await self.payment_request_repo.create_request(
                         user_id, total_cost, idempotency_key
+                    )
+                    await redis_cache.set(
+                        idempotency_key,
+                        {
+                            "amount": total_cost,
+                            "quantity": payload.quantity
+                        },
+                        expire=300
                     )
 
             except Exception:
