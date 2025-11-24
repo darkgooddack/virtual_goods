@@ -22,10 +22,9 @@ async def purchase_product(
     current_user: UserOut = Depends(get_current_user),
     service: ProductService = Depends(get_product_service),
 ):
-    res = await service.process_purchase(
+    return await service.process_purchase(
         user_id=current_user.id,
         product_id=product_id,
         payload=payload,
         idempotency_key=idempotency_key
     )
-    return res

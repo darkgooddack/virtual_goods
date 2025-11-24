@@ -28,13 +28,18 @@ class ProductService:
             idempotency_key: str
     ) -> ProductPurchaseResponse:
 
+        # FIXME: Сейчас метод раздут, декомпозировать на отдельные функции:
+        #        - проверка наличия товара
+        #        - проверка кеша
+        #        - проверка БД
+        #        - проверка баланса пользователя
+        #        - обновление инвентаря и кеша
+        #        - запись транзакции
+
         # Проверяем наличие товара
         product = await self.product_repo.get_product(product_id)
         if not product or not product.is_active:
             return ProductPurchaseResponse(
-                success=False,
-                amount_spent=0,
-                product_received=None,
                 message="Товар не найден или не активен"
             )
 
@@ -67,9 +72,6 @@ class ProductService:
         user_balance = await self.user_repo.get_balance(user_id)
         if user_balance < total_cost:
             return ProductPurchaseResponse(
-                success=False,
-                amount_spent=0,
-                product_received=None,
                 message="Недостаточно средств"
             )
 
@@ -77,9 +79,6 @@ class ProductService:
         inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
         if product.product_type == "permanent" and inventory_item:
             return ProductPurchaseResponse(
-                success=False,
-                amount_spent=0,
-                product_received=None,
                 message="Товар уже куплен"
             )
 

@@ -18,7 +18,7 @@ class ProductInfo(BaseModel):
 
 
 class ProductPurchaseResponse(BaseModel):
-    success: bool
-    amount_spent: int
+    success: bool = False
+    amount_spent: int = 0
     product_received: Optional[ProductInfo] = None
     message: str
