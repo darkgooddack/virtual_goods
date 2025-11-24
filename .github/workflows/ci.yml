@@ -32,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -43,14 +43,14 @@ jobs:
 
       - name: Wait for Postgres
         run: |
-          until pg_isready -h postgres -p 5432 -U test_user; do
-            echo "Waiting for postgres..."
+          echo "Waiting for Postgres to be ready..."
+          until pg_isready -h localhost -p 5432 -U test_user; do
             sleep 1
           done
 
       - name: Run tests
         env:
-          DB__HOST: postgres
+          DB__HOST: localhost
           DB__PORT: 5432
           DB__NAME: test_db
           DB__USER: test_user
