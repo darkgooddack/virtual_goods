@@ -1,13 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 
 from app.core.dependencies import get_product_service
 from app.core.security import get_current_user
 from app.schema.product import ProductForBuy, ProductPurchaseResponse
 from app.schema.user import UserOut
 from app.service.product import ProductService
-
 
 router = APIRouter(prefix="/products", tags=["Продукты"])
 
@@ -19,12 +18,13 @@ router = APIRouter(prefix="/products", tags=["Продукты"])
 async def purchase_product(
     product_id: uuid.UUID,
     payload: ProductForBuy,
+    idempotency_key: str = Header(..., alias="Idempotency-Key"),
     current_user: UserOut = Depends(get_current_user),
     service: ProductService = Depends(get_product_service),
 ):
-    res = await service.process_purchase(
+    return await service.process_purchase(
         user_id=current_user.id,
         product_id=product_id,
-        payload=payload
+        payload=payload,
+        idempotency_key=idempotency_key
     )
-    return res
