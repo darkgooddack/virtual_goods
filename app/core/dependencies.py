@@ -20,10 +20,10 @@ def get_redis_cache():
     return redis_cache
 
 def get_health_service(
-    health_repo: HealthRepository = Depends(),
-    redis_cache: RedisCache = Depends(get_redis_cache)
+    session: AsyncSession = Depends(get_session)
 ) -> HealthService:
-    return HealthService(health_repo, redis_cache)
+    health_repo = HealthRepository(session)
+    return HealthService(health_repo=health_repo, redis_cache=redis_cache)
 
 def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
     repo = UserRepository(session)

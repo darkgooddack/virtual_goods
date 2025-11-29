@@ -4,7 +4,7 @@ from app.utils.redis import RedisCache
 
 
 class HealthService:
-    def __init__(self, health_repo: HealthRepository, redis_cache: RedisCache):
+    def __init__(self, health_repo: HealthRepository, redis_cache):
         self.health_repo = health_repo
         self.redis_cache = redis_cache
 

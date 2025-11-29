@@ -13,7 +13,5 @@ async def liveness():
 
 
 @router.get("/readiness", response_model=HealthResponse)
-async def readiness(
-    service: HealthService = Depends(get_health_service)
-):
+async def readiness(service: HealthService = Depends(get_health_service)):
     return await service.check_health()
