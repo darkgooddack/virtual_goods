@@ -2,6 +2,7 @@ from redis.asyncio import Redis
 import json
 from typing import Any
 from app.core.config import settings
+import redis.exceptions
 
 
 class RedisCache:
@@ -22,6 +23,13 @@ class RedisCache:
 
     async def delete(self, key: str):
         await self.redis.delete(key)
+
+    async def check_redis(self) -> bool:
+        try:
+            pong = await self.redis.ping()
+            return bool(pong)
+        except redis.exceptions.RedisError:
+            return False
 
 
 redis_cache = RedisCache()
