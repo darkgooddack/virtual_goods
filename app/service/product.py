@@ -1,5 +1,6 @@
 import uuid
 from app.schema.product import ProductForBuy, ProductPurchaseResponse, ProductInfo
+from app.schema.user import UseConsumableItemResponse
 from app.utils.error import TransactionFailedError
 from app.utils.redis import redis_cache
 from app.utils.unit_of_work import UnitOfWork
@@ -153,3 +154,39 @@ class ProductService:
             ),
             message="Покупка успешно завершена"
         )
+
+    async def use_consumable_item(self, user_id, product_id, idempotency_key) -> UseConsumableItemResponse:
+
+        cached = await redis_cache.get(idempotency_key)
+        if cached:
+            return UseConsumableItemResponse(
+                message="Операция уже обработана",
+                remaining_quantity=cached.get("remaining_quantity")
+            )
+
+        inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
+        if not inventory_item or inventory_item.quantity <= 0:
+            return UseConsumableItemResponse(
+                success=False,
+                message="У пользователя нет такого товара",
+                remaining_quantity=0
+            )
+
+        await self.inventory_repo.update_inventory_quantity(inventory_item, -1)
+
+        await redis_cache.set(
+            idempotency_key,
+            {"remaining_quantity": inventory_item.quantity},
+            expire=300
+        )
+
+        return UseConsumableItemResponse(
+            message="Товар использован",
+            remaining_quantity=inventory_item.quantity
+        )
+
+
+
+
+
+

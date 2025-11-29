@@ -56,8 +56,14 @@ class UserLoginOut(BaseModel):
 class BalanceTopUpRequest(BaseModel):
     top_up_amount: conint(gt=0, le=12000, multiple_of=10)
 
+
 class BalanceTopUpResponse(BaseModel):
     success: bool = True
     amount_added: int = 0
     message: str = "Баланс уже пополнен"
 
+
+class UseConsumableItemResponse(BaseModel):
+    success: bool = True
+    message: str
+    remaining_quantity: int | None = None
