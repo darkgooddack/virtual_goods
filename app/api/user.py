@@ -6,7 +6,7 @@ from app.schema.user import (
     UserRegisterIn,
     UserRegisterOut,
     UserLoginIn,
-    UserLoginOut, UserOut, BalanceTopUpRequest
+    UserLoginOut, UserOut, BalanceTopUpRequest, BalanceTopUpResponse
 )
 from app.service.inventory import InventoryService
 from app.service.user import UserService
@@ -41,7 +41,7 @@ async def receiving_inventory(
     return await service.get_user_inventory(current_user.id)
 
 
-@router.post("/add-funds", response_model=...)
+@router.post("/add-funds", response_model=BalanceTopUpResponse)
 async def top_up_balance(
     payload: BalanceTopUpRequest,
     idempotency_key: str = Header(..., alias="Idempotency-Key"),
