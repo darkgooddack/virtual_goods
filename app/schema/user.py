@@ -1,6 +1,6 @@
 import uuid
 import re
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, conint
 
 
 class EmailMixin(BaseModel):
@@ -51,3 +51,13 @@ class UserLoginOut(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+class BalanceTopUpRequest(BaseModel):
+    top_up_amount: conint(gt=0, le=12000, multiple_of=10)
+
+class BalanceTopUpResponse(BaseModel):
+    success: bool = True
+    amount_added: int = 0
+    message: str = "Баланс уже пополнен"
+
