@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.core.dependencies import get_health_service
+from app.schema.health import HealthResponse
 from app.service.health import HealthService
 
 
@@ -11,8 +12,8 @@ async def liveness():
     return {"status": "ok"}
 
 
-@router.get("/readiness")
+@router.get("/readiness", response_model=HealthResponse)
 async def readiness(
-     service: HealthService = Depends(get_health_service)
+    service: HealthService = Depends(get_health_service)
 ):
     return await service.check_health()
