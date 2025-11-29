@@ -35,7 +35,8 @@ class UserService:
 
     async def top_up(self, idempotency_key, user_id, amount) -> BalanceTopUpResponse:
 
-        # TODO: Добавить запись транзакции в таблицу history_transactions
+        # TODO: Event Sourcing
+        #       Добавить запись транзакции в таблицу history_transactions
         #       Добавить колонку "operation_type" или "action", чтобы хранить
         #       тип операции: сняли (debit) или положили (credit) деньги.
         #       Это позволит видеть историю всех изменений баланса пользователя.
@@ -44,7 +45,7 @@ class UserService:
         if cached:
             return BalanceTopUpResponse()
 
-        await self.repo.increase_balance(user_id, amount)
+        await self.repo.increase_user_balance(user_id, amount)
 
         await redis_cache.set(idempotency_key, {"amount": amount}, expire=300)
         return BalanceTopUpResponse(
