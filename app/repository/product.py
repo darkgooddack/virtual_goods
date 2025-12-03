@@ -13,6 +13,3 @@ class ProductRepository:
     async def get_product(self, product_id: uuid.UUID) -> Product | None:
         result = await self.session.execute(select(Product).where(Product.id == product_id))
         return result.scalar_one_or_none()
-
-    async def commit(self):
-        await self.session.commit()

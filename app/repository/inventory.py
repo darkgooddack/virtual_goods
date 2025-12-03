@@ -28,7 +28,7 @@ class InventoryRepository:
     async def update_inventory_quantity(self, item: Inventory, quantity: int):
         item.quantity += quantity
         self.session.add(item)
-        await self.session.commit()
+        await self.session.flush()
 
     async def get_by_user_id(self, user_id: uuid.UUID):
         query = (

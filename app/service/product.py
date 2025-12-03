@@ -156,7 +156,6 @@ class ProductService:
         )
 
     async def use_consumable_item(self, user_id, product_id, idempotency_key) -> UseConsumableItemResponse:
-
         cached = await redis_cache.get(idempotency_key)
         if cached:
             return UseConsumableItemResponse(
@@ -164,21 +163,22 @@ class ProductService:
                 remaining_quantity=cached.get("remaining_quantity")
             )
 
-        inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
-        if not inventory_item or inventory_item.quantity <= 0:
-            return UseConsumableItemResponse(
-                success=False,
-                message="У пользователя нет такого товара",
-                remaining_quantity=0
+        async with UnitOfWork(self.inventory_repo.session):
+            inventory_item = await self.inventory_repo.get_inventory_item(user_id, product_id)
+            if not inventory_item or inventory_item.quantity <= 0:
+                return UseConsumableItemResponse(
+                    success=False,
+                    message="У пользователя нет такого товара",
+                    remaining_quantity=0
+                )
+
+            await self.inventory_repo.update_inventory_quantity(inventory_item, -1)
+
+            await redis_cache.set(
+                idempotency_key,
+                {"remaining_quantity": inventory_item.quantity},
+                expire=300
             )
-
-        await self.inventory_repo.update_inventory_quantity(inventory_item, -1)
-
-        await redis_cache.set(
-            idempotency_key,
-            {"remaining_quantity": inventory_item.quantity},
-            expire=300
-        )
 
         return UseConsumableItemResponse(
             message="Товар использован",
