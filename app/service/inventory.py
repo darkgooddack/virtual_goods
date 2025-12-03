@@ -31,4 +31,3 @@ class InventoryService:
 
         await self.cache.set(cache_key, data, expire=300)
         return result
-

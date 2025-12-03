@@ -184,9 +184,3 @@ class ProductService:
             message="Товар использован",
             remaining_quantity=inventory_item.quantity
         )
-
-
-
-
-
-

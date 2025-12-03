@@ -49,6 +49,6 @@ class UserService:
 
         await redis_cache.set(idempotency_key, {"amount": amount}, expire=300)
         return BalanceTopUpResponse(
-            amount_added = amount,
-            message = "Баланс успешно пополнен"
+            amount_added=amount,
+            message="Баланс успешно пополнен"
         )

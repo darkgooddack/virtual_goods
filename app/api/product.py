@@ -8,6 +8,7 @@ from app.schema.product import ProductForBuy, ProductPurchaseResponse
 from app.schema.user import UserOut, UseConsumableItemResponse
 from app.service.product import ProductService
 
+
 router = APIRouter(prefix="/products", tags=["Продукты"])
 
 

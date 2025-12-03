@@ -1,6 +1,5 @@
 from app.repository.health import HealthRepository
 from app.schema.health import HealthResponse, ServicesStatus
-from app.utils.redis import RedisCache
 
 
 class HealthService:

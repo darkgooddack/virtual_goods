@@ -12,7 +12,7 @@ celery_app = Celery(
 celery_app.conf.beat_schedule = {
     "clear_inventory_cache_daily": {
         "task": "app.tasks.cache.clear_inventory_cache",
-        "schedule": 24*60*60,
+        "schedule": 24 * 60 * 60,
     }
 }
 celery_app.conf.timezone = "UTC"

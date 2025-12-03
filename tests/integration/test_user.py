@@ -6,6 +6,7 @@ from uuid import UUID
 from app.models.user import User
 from app.core.security import hash_password
 
+
 async def create_user(
         session: AsyncSession,
         username="username",
@@ -22,6 +23,7 @@ async def create_user(
     await session.refresh(user)
     return user
 
+
 @pytest.mark.asyncio
 async def test_register_success(
         ac: AsyncClient,
@@ -29,7 +31,7 @@ async def test_register_success(
 ):
     response = await ac.post(
         "/api/v1/users/register",
-        json = {
+        json={
             "email": "alice@mail.com",
             "username": "username",
             "password": "string12345"
@@ -43,6 +45,7 @@ async def test_register_success(
     user = await session.get(User, UUID(data["id"]))
     assert user is not None
     assert user.email == "alice@mail.com"
+
 
 @pytest.mark.asyncio
 async def test_register_email_exists(
@@ -58,6 +61,7 @@ async def test_register_email_exists(
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Пользователь с такой почтой уже существует"
+
 
 @pytest.mark.asyncio
 async def test_login_success(
@@ -78,6 +82,7 @@ async def test_login_success(
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
 
+
 @pytest.mark.asyncio
 async def test_login_wrong_password(
         ac: AsyncClient,
@@ -93,6 +98,7 @@ async def test_login_wrong_password(
     assert response.status_code == 401
     assert response.json()["detail"] == "Неверный логин или пароль"
 
+
 @pytest.mark.asyncio
 async def test_register_invalid_username(ac: AsyncClient):
     response = await ac.post(
@@ -102,6 +108,7 @@ async def test_register_invalid_username(ac: AsyncClient):
 
     assert response.status_code == 422
     assert response.json()["detail"][0]["msg"].startswith("String should have at least")
+
 
 @pytest.mark.asyncio
 async def test_register_invalid_email(ac: AsyncClient):
@@ -113,6 +120,7 @@ async def test_register_invalid_email(ac: AsyncClient):
     assert response.status_code == 422
     assert "value is not a valid email address" in response.json()["detail"][0]["msg"]
 
+
 @pytest.mark.asyncio
 async def test_register_password_too_short(ac: AsyncClient):
     response = await ac.post(
@@ -123,6 +131,7 @@ async def test_register_password_too_short(ac: AsyncClient):
     assert response.status_code == 422
     assert "Пароль должен быть больше 10 символов" in response.json()["detail"][0]["msg"]
 
+
 @pytest.mark.asyncio
 async def test_register_password_no_digit(ac: AsyncClient):
     response = await ac.post(
@@ -132,6 +141,7 @@ async def test_register_password_no_digit(ac: AsyncClient):
 
     assert response.status_code == 422
     assert "Пароль должен содержать цифру" in response.json()["detail"][0]["msg"]
+
 
 @pytest.mark.asyncio
 async def test_register_password_no_letter(ac: AsyncClient):
