@@ -23,27 +23,20 @@ class UserRepository:
         return result.scalar_one_or_none()
 
     async def create_user(self, username: str, email: EmailStr, password_hash: str) -> User:
-        user = User(
-            username=username,
-            email=email,
-            hash_password=password_hash
-        )
+        user = User(username=username, email=email, hash_password=password_hash)
         self.session.add(user)
-        await self.session.commit()
-        await self.session.refresh(user)
+        await self.session.flush()
         return user
 
     async def decrease_user_balance(self, user_id: uuid.UUID, amount: int):
         user = await self.session.get(User, user_id)
         user.balance -= amount
         self.session.add(user)
-        await self.session.commit()
 
     async def increase_user_balance(self, user_id: uuid.UUID, amount: int):
         user = await self.session.get(User, user_id)
         user.balance += amount
         self.session.add(user)
-        await self.session.commit()
 
     async def get_balance(self, user_id: uuid.UUID) -> int:
         user = await self.session.get(User, user_id)
