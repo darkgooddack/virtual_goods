@@ -4,6 +4,7 @@ from app.schema.user import UserRegisterIn, UserLoginIn, UserLoginOut, UserRegis
 from app.core.security import hash_password, verify_password, create_token_pair
 from app.utils.error import UserAlreadyExistsError, InvalidCredentialsError
 from app.utils.redis import redis_cache
+from app.utils.unit_of_work import UnitOfWork
 
 
 class UserService:
@@ -14,12 +15,12 @@ class UserService:
         existing = await self.repo.get_by_email(data.email)
         if existing:
             raise UserAlreadyExistsError()
-
-        user = await self.repo.create_user(
-            username=data.username,
-            email=data.email,
-            password_hash=hash_password(data.password)
-        )
+        async with UnitOfWork(self.repo.session):
+            user = await self.repo.create_user(
+                username=data.username,
+                email=data.email,
+                password_hash=hash_password(data.password)
+            )
 
         return UserRegisterOut(id=user.id, email=user.email)
 
@@ -39,7 +40,8 @@ class UserService:
         if cached:
             return BalanceTopUpResponse()
 
-        await self.repo.increase_user_balance(user_id, amount)
+        async with UnitOfWork(self.repo.session):
+            await self.repo.increase_user_balance(user_id, amount)
 
         await redis_cache.set(idempotency_key, {"amount": amount}, expire=300)
         return BalanceTopUpResponse(
