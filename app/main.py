@@ -6,10 +6,12 @@ from app.core.config import settings
 from app.utils.error import AppBaseError
 from app.api import routers
 
+
 app = FastAPI(
     name="API Virtual Goods",
     description="Виртуальные товары"
 )
+
 
 @app.exception_handler(AppBaseError)
 async def shortener_base_error_handler(

@@ -22,6 +22,7 @@ async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
 
 app.dependency_overrides[get_session] = get_test_session
 
+
 @pytest.fixture(scope="session", autouse=True)
 async def setup_db():
     async with engine.begin() as connection:

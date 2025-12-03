@@ -13,7 +13,6 @@ from app.service.user import UserService
 from app.core.dependencies import get_user_service, get_inventory_service
 
 
-
 router = APIRouter(prefix="/users", tags=["Пользователи"])
 
 
@@ -30,7 +29,7 @@ async def login(
     payload: UserLoginIn,
     service: UserService = Depends(get_user_service)
 ) -> UserLoginOut:
-   return await service.login(payload)
+    return await service.login(payload)
 
 
 @router.get("/inventory", response_model=list[InventoryItemOut])

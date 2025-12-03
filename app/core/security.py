@@ -21,8 +21,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
 
 def _create_token(data: dict, expires_delta: timedelta) -> str:
     payload = data.copy()
@@ -34,11 +36,13 @@ def _create_token(data: dict, expires_delta: timedelta) -> str:
         algorithm=settings.jwt.algorithm
     )
 
+
 def create_access_token(user_id: str) -> str:
     return _create_token(
         {"sub": user_id, "typ": "access"},
         timedelta(minutes=settings.jwt.access_expire_min)
     )
+
 
 def create_refresh_token(user_id: str) -> str:
     return _create_token(
@@ -53,6 +57,7 @@ def create_token_pair(user_id: str) -> UserLoginOut:
         refresh_token=create_refresh_token(user_id),
         token_type="bearer"
     )
+
 
 def decode_access_token(token: str) -> dict:
     try:
@@ -79,4 +84,3 @@ async def get_current_user(
         raise InvalidCredentialsError()
 
     return UserOut.model_validate(user)
-

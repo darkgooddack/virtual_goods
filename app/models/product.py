@@ -39,7 +39,7 @@ class Product(Base):
     )
     created_at: Mapped[datetime.datetime] = mapped_column(
         server_default=func.now(),
-        index = True
+        index=True
     )
 
     transactions = relationship(
